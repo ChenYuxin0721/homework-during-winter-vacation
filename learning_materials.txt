@@ -1,0 +1,7 @@
+http://docscn.studygolang.com/doc/ 文档
+
+https://github.com/quii/learn-go-with-tests（基础学习，由于英语不好看得太累最终废弃）
+
+https://github.com/dzyanis/roadmap 思维导图（不知道自己在学什么的时候看了一眼，发现看了更不知道自己在学什么）
+
+https://github.com/gin-gonic/gin（没学完的gin框架......是的我还没开写，是我又菜又摸鱼....完全不知道四天后会写出个啥）
