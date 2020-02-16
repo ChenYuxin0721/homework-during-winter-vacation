@@ -1,210 +1,133 @@
 package main
-
 import (
-	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
-    "log"
-    "time"
-    "github.com/gin-gonic/gin"
+"database/sql"
+"fmt"
+"time"
+_ "github.com/go-sql-driver/mysql"
 )
 
-type Student struct {
-	gorm.Familyinfo
-	gorm.Classmate
-    Name     string    `form:"name"`
-	Address  string    `form:"address"`
-	ID       int       `gorm:"primary_key"`
-	Telenum  int   
-	QQ       int       
-    Birthday time.Time `form:"birthday" time_format:"2006-01-02" time_utc:"1"`
+type User struct {
+ID int64 `db:"id"`
+
+Name sql.NullString `db:"name"`
+Age  int            `db:"age"`
 }
-
-type Familyinfo struct {
-	Id   int 
-	name string
-	telenum int
-}
-
-type Classmate struct {
-	Name string
-	Telenum int16
-}
-
-type Teacher struct {
-	Id   int 
-	Name string
-}
-
-
-func main() {
-    route := gin.Default()
-    route.GET("/testing", startPage)
-    route.Run(":8085")
-}
-
-
-var (
-	db  *gorm.DB
-	err error
+// 定义mysql账号密码等信息
+const (
+USERNAME = "root"
+PASSWORD = "12345678"
+NETWORK  = "tcp"
+SERVER  = "localhost"
+PORT    = 3306
+DATABASE = "tfbuilder"
 )
 
 
 func main() {
-	db, err := sql.Open("mysql", "root:123456/nulige?charset=utf8")
-	if err != nil {
-		panic(err)
-	}
-
-	//fmt.Println(db.Ping())  检查是否连接成功数据库
-	stmt, err := db.Prepare("INSERT INTO user_info SET username=?,departname=?,create_time=?")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		panic(err)
-	}
-
-	Router()
+dsn := fmt.Sprintf("%s:%s@%s(%s:%d)/%s", USERNAME, PASSWORD, NETWORK, SERVER, PORT, DATABASE)
+DB, err := sql.Open("mysql", dsn)
+if err != nil {
+fmt.Printf("Open mysql failed,err:%v\n", err)
+return
 }
-
-func Router() {
-	router := gin.Default()
-	v1 := router.Group("/student")
-	{
-		v1.GET("/get/:id", GetStuinfo)
-		v1.POST("/class",ListClass)
-	}
-	v2 := router.Group("/teacher") 
-	{
-		v2.POST("/list", ListStu) 
-	}
-	v3 := router.Group("/administrator")
-	{
-		v3.POST("/search",queryStu)
-		v3.POST("/family/create", Family)
-		v3.POST("/createStu", CreateStu)
-		v3.DELETE("/:id", DeleteStu)
-		v3.DELETE("/:id", DeleteTeacher)
-	}
-
-	router.GET("/stu", InitPage)
-
-	router.Run(":8080")
+// 给db设置一个超时时间，时间小于数据库的超时时间即可
+DB.SetConnMaxLifetime(100 * time.Second)
+// 用于设置最大打开的连接数，默认值为0表示不限制。
+DB.SetMaxOpenConns(100)
+// 用于设置闲置的连接数
+DB.SetMaxIdleConns(16)
+queryOne(DB)
+queryMulti(DB)
+insertData(DB)
+updateData(DB)
+deleteData(DB)
 }
-
-func GetStuinfo(c *gin.Context) {
-	var stu Stu
-	db.Create(&stu)
-	id := c.Params.ByName("id")
-	err := db.First(&stu, id).Error
-	if err != nil {
-		c.AbortWithStatus(404)
-		fmt.Println(err.Error())
-	} else {
-		c.JSON(200, &stu)
-	}
+//查询单行
+func queryOne(DB *sql.DB) {
+user := new(User)
+// 查询单行数据
+row := DB.QueryRow("select * from users where id=?", 1)
+// 如果行不存在,则Scan()返回错误，需要处理异常，并绑定数据到结构体上
+if err := row.Scan(&user.ID, &user.Name, &user.Age); err != nil {
+fmt.Printf("scan failed, err:%v", err)
+return
 }
-
-func ListStu(c *gin.Context) {
-	var stu []Stu
-	db.Find(&stu)
-	c.JSON(200, &stu)
+fmt.Println(*user)
+}
+//查询多行
+func queryMulti(DB *sql.DB) {
+user := new(User)
+// 查询多行数据
+rows, err := DB.Query("select * from users where id > ?", 1)
+defer func() {
+if rows != nil {
+rows.Close()
+}
+}()
+if err != nil {
+fmt.Printf("Query failed,err:%v", err)
+return
+}
+for rows.Next() {
+err = rows.Scan(&user.ID, &user.Name, &user.Age)
+if err != nil {
+fmt.Printf("Scan failed,err:%v", err)
+return
+}
+fmt.Print(*user)
+}
 }
 
 
-func ListClass(c *gin.Context) {
-	var class []Class
-	db.Find(&class)
-	c.JSON(200, &class)
+//插入数据
+func insertData(DB *sql.DB) {
+result, err := DB.Exec("insert INTO users(name,age) values(?,?)", "YDZ", 23)
+if err != nil {
+fmt.Printf("Insert failed,err:%v", err)
+return
+}
+// 最后插入的Id
+lastInsertID, err := result.LastInsertId()
+if err != nil {
+fmt.Printf("Get lastInsertID failed,err:%v", err)
+return
+}
+fmt.Println("LastInsertID:", lastInsertID)
+// 本次插入数据影响的行数
+rowsaffected, err := result.RowsAffected()
+if err != nil {
+fmt.Printf("Get RowsAffected failed,err:%v", err)
+return
+}
+fmt.Println("RowsAffected:", rowsaffected)
 }
 
 
-func DeleteStu(c *gin.Context) {
-	var stu Stu
-	id := c.Params.ByName("id")
-	db.First(&stu, id)
-	if user.Id != 0 {
-		db.Delete(&stu)
-		c.JSON(200, gin.H{
-			"message": "successfully deleted",
-		})
-	} else {
-		c.JSON(404, gin.H{
-			"error": "Not found",
-		})
-	}
+func updateData(DB *sql.DB) {
+result, err := DB.Exec("UPDATE users set age=? where id=?", "30", 3)
+if err != nil {
+fmt.Printf("Insert failed,err:%v", err)
+return
+}
+rowsaffected, err := result.RowsAffected()
+if err != nil {
+fmt.Printf("Get RowsAffected failed,err:%v", err)
+return
+}
+fmt.Println("RowsAffected:", rowsaffected)
 }
 
 
-func DeleteTeacher(c *gin.Context) {
-	var teacher Teacher
-	id := c.Params.ByName("id")
-	db.First(&teach, id)
-	if teacher.Id != 0 {
-		c.JSON(200, gin.H{
-			"success": "successfully deleted",
-		})
-	} else {
-		c.JSON(404, gin.H{
-			"error": "Not found",
-		})
-	}
+func deleteData(DB *sql.DB) {
+result, err := DB.Exec("delete from users where id=?", 1)
+if err != nil {
+fmt.Printf("Insert failed,err:%v", err)
+return
 }
-
-
-func Family(c *gin.Context) {
-	var family Familyinfo
-	c.BindJSON(&family)
-	if family.ID != "" {
-		db.Create(&family)
-		c.JSON(200, gin.H{"success": &family})
-	} else {
-		c.JSON(400, gin.H{
-			"message": "error",
-		})
-	}
+rowsaffected, err := result.RowsAffected()
+if err != nil {
+fmt.Printf("Get RowsAffected failed,err:%v", err)
+return
 }
-
-func CreateStu(c *gin.Context) {
-	var stu Stu
-	c.BindJSON(&stu)
-	if stu.ID != "" {
-		db.Create(&stu)
-		c.JSON(200, gin.H{"success": &stu})
-	} else {
-		c.JSON(400, gin.H{
-			"message": "error",
-		})
-	}
+fmt.Println("RowsAffected:", rowsaffected)
 }
-
-func updateData(c *gin.Context) {
-	result, err := DB.Exec("UPDATE users set age=? where id=?", "30", 3)
-	if err != nil {
-	fmt.Printf("Insert failed,err:%v", err)
-	return
-	}
-	rowsaffected, err := result.RowsAffected()
-	if err != nil {
-	c.JSON(400,gin.H{
-		"error":"NOT FIND"
-	})
-	return
-	}
-	c.JSON(200,rowsaffected)
-	}
-
-func queryStu(c *gin.Context) {
-	user := new(Stu)
-	row := DB.QueryRow("select * from users where id=?", 1)
-	// 如果行不存在,则Scan()返回错误，需要处理异常，并绑定数据到结构体上
-	if err := row.Scan(&stu.ID, &stu.Name, &stu.telenum); err != nil {
-	c.JSON(400,gin.H{
-		"error":"NOT FIND"
-	})
-	return
-	}
-	c.JSON(200,&stu)
-	}
