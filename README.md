@@ -10,35 +10,35 @@
 
 - Request Headers
 
-    "Content-Type": "application/json"
+        "Content-Type": "application/json"
 
 - Request Body
 
 
-    {  
-        "username": "abc",  
+      {  
+            "username": "abc",  
     
-        "password": "1234"    
-    }
+            "password": "1234"    
+      }
 
 - Response Body
 
-    //成功  
-    {  
-        "message": "",  
+        //成功  
+        {  
+            "message": "",  
   
-        "status": 1    
-    }
+            "status": 1    
+        }
 
 
-    //失败  
-    {  
-        "message": "", 
+        //失败  
+        {  
+            "message": "", 
   
-        "status": 0,  
+            "status": 0,  
   
-        "token": ""  
-    }
+            "token": ""  
+        }
 
 
 
