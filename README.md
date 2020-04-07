@@ -40,5 +40,37 @@
             "token": ""  
         }
 
+# api/register
+-  method:POST
+
+- Request Headers
+
+        "Content-Type": "application/json"
+
+- Request Body
+
+
+      {  
+            "username": "abc",  
+    
+            "password": "1234"    
+      }
+
+- Response Body
+
+        //成功  
+        {  
+            "message": "",  
+  
+            "status": 1    
+        }
+
+
+        //失败  
+        {  
+            "message": "", 
+  
+            "status": 0,  
+        }
 
 
