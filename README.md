@@ -6,13 +6,13 @@
 1：达到最后一页  
 2：成功但不是最后一页  
 # api/login
-1. method:POST
+-  method:POST
 
-2. Request Headers
+- Request Headers
 
     "Content-Type": "application/json"
 
-3. Request Body
+- Request Body
 
 
     {  
@@ -21,7 +21,7 @@
         "password": "1234"    
     }
 
-4. Response Body
+- Response Body
 
     //成功  
     {  
