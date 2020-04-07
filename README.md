@@ -18,11 +18,9 @@
 
 #```
 {  
-
     "username": "abc",  
     
-    "password": "1234"  
-    
+    "password": "1234"    
 }
 #```
 
@@ -30,27 +28,21 @@
 
 #```
 //成功  
-
 {  
-
   "message": "",  
   
-  "status": 1  
-  
+  "status": 1    
 }
 #```
 
 #```
 //失败  
-
 {  
-
   "message": "", 
   
   "status": 0,  
   
   "token": ""  
-  
 }
 #```
 
